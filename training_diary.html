@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дневник">
+<meta name="theme-color" content="#0a0a0f">
+<title>Дневник тренировок</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #18181f;
+  --border: #22222e;
+  --border2: #2e2e3e;
+  --accent: #7059f7;
+  --accent2: #9d8cfa;
+  --accent-glow: rgba(112,89,247,0.25);
+  --green: #3dd68c;
+  --orange: #f5a623;
+  --red: #f05050;
+  --yellow: #f5c842;
+  --text: #f0f0f8;
+  --text2: #9090a8;
+  --text3: #55556a;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+#app { display: flex; flex-direction: column; height: 100%; }
+.status-bar { height: var(--safe-top); background: var(--bg); flex-shrink: 0; }
+
+.header { padding: 12px 20px 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+.header-title { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.header-title span { color: var(--accent2); }
+.header-week { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); }
+
+.scroll-content { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 0 16px 16px; }
+.scroll-content::-webkit-scrollbar { display: none; }
+
+.tab-bar { display: flex; padding: 8px 8px; padding-bottom: calc(8px + var(--safe-bottom)); background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; gap: 2px; }
+.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px; border: none; background: none; cursor: pointer; border-radius: 10px; transition: background 0.15s; }
+.tab-btn.active { background: var(--surface2); }
+.tab-icon { font-size: 18px; }
+.tab-label { font-size: 9px; color: var(--text3); font-weight: 500; }
+.tab-btn.active .tab-label { color: var(--accent2); }
+
+.screen { display: none; padding-top: 12px; }
+.screen.active { display: block; }
+
+/* ── HOME ── */
+.greeting { margin-bottom: 18px; }
+.greeting-name { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; line-height: 1.2; margin-bottom: 4px; }
+.greeting-name span { color: var(--accent2); }
+.greeting-sub { font-size: 13px; color: var(--text2); }
+.stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 10px; text-align: center; }
+.stat-mini-val { font-family: 'Unbounded', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent2); line-height: 1; margin-bottom: 4px; }
+.stat-mini-label { font-size: 10px; color: var(--text3); }
+.progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.progress-card-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+.progress-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.progress-bar-label { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; }
+.progress-bar-track { flex: 1; height: 6px; background: var(--border2); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.6s cubic-bezier(.34,1.56,.64,1); }
+.progress-bar-val { font-size: 12px; font-weight: 600; color: var(--accent2); width: 32px; text-align: right; flex-shrink: 0; }
+.next-session-card { background: linear-gradient(135deg, #1a1530 0%, #111118 100%); border: 1px solid var(--accent); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
+.next-session-card::before { content: ''; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: var(--accent-glow); border-radius: 50%; filter: blur(30px); }
+.next-label { font-size: 10px; color: var(--accent2); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+.next-title { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.next-desc { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+.next-btn { margin-top: 12px; width: 100%; padding: 11px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.next-btn:active { opacity: 0.8; }
+
+.install-hint { background: linear-gradient(135deg, #1a1530, #111118); border: 1px solid var(--accent); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 10px; align-items: flex-start; }
+.install-hint-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.install-hint-text strong { color: var(--text); }
+.install-dismiss { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; flex-shrink: 0; padding: 0; margin-left: auto; }
+
+/* ── DIARY ── */
+.week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.week-nav-btn { width: 36px; height: 36px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.week-nav-center { text-align: center; }
+.week-nav-num { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; }
+.week-nav-phase { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.session-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.2s; }
+.session-card.done-card { border-color: var(--green); }
+.session-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; cursor: pointer; }
+.session-day { font-size: 14px; font-weight: 600; }
+.session-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.done-badge { display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 5px 10px; font-size: 12px; color: var(--text3); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.done-badge.is-done { background: rgba(61,214,140,0.12); border-color: var(--green); color: var(--green); }
+.session-body { padding: 0 14px 14px; }
+.divider { height: 1px; background: var(--border); margin-bottom: 12px; }
+
+/* exercise plan card - the main new thing */
+.ex-plan-card { background: var(--bg); border: 1px solid var(--border2); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.ex-plan-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.ex-plan-badge { font-size: 10px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 2px 7px; color: var(--text3); font-weight: 500; }
+.ex-plan-scheme { font-size: 14px; font-weight: 700; color: var(--accent2); font-family: 'Unbounded', sans-serif; margin-bottom: 8px; }
+.ex-plan-steps { list-style: none; }
+.ex-plan-steps li { font-size: 12px; color: var(--text2); padding: 3px 0; padding-left: 14px; position: relative; line-height: 1.4; }
+.ex-plan-steps li::before { content: '→'; position: absolute; left: 0; color: var(--accent); font-size: 10px; top: 4px; }
+.ex-plan-steps li strong { color: var(--text); }
+.negative-tip { background: rgba(112,89,247,0.08); border: 1px solid rgba(112,89,247,0.3); border-radius: 8px; padding: 8px 10px; margin-top: 6px; font-size: 11px; color: var(--accent2); line-height: 1.5; }
+.negative-tip b { color: var(--text); }
+
+.ex-grid-header { display: grid; grid-template-columns: 1fr 60px; gap: 6px; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--border); margin-top: 10px; }
+.ex-gh { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.ex-gh:not(:first-child) { text-align: center; }
+.ex-row { display: grid; grid-template-columns: 1fr 60px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.ex-name-small { font-size: 12px; color: var(--text2); }
+.ex-input { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: 12px; text-align: center; padding: 7px 4px; width: 100%; outline: none; font-family: 'Inter', sans-serif; -webkit-appearance: none; }
+.ex-input:focus { border-color: var(--accent); }
+.ex-input::placeholder { color: var(--text3); }
+
+.feel-label { font-size: 11px; color: var(--text3); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.feel-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.feel-btn { flex: 1; padding: 8px 4px; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; font-size: 15px; text-align: center; cursor: pointer; transition: all 0.15s; }
+.feel-btn.selected { border-color: var(--accent); background: rgba(112,89,247,0.15); }
+.feel-desc { font-size: 10px; color: var(--text3); text-align: center; margin-top: 2px; }
+
+textarea.note-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-size: 13px; padding: 10px 12px; resize: none; outline: none; font-family: 'Inter', sans-serif; -webkit-appearance: none; }
+textarea.note-input:focus { border-color: var(--accent); }
+textarea.note-input::placeholder { color: var(--text3); }
+
+.mark-done-btn { width: 100%; margin-top: 10px; padding: 12px; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.mark-done-btn:active { opacity: 0.8; }
+.mark-done-btn.already-done { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid var(--green); }
+
+/* set tracker */
+.sets-tracker { margin-top: 10px; }
+.sets-tracker-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.set-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.set-label { font-size: 12px; color: var(--text2); width: 60px; flex-shrink: 0; }
+.set-controls { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; }
+.set-btn { width: 36px; height: 36px; background: none; border: none; color: var(--accent2); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.set-btn:active { background: var(--surface2); }
+.set-val { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); width: 36px; text-align: center; line-height: 36px; }
+.set-val.over { color: var(--green); }
+.set-val.under { color: var(--red); }
+.set-plan-ref { font-size: 11px; color: var(--text3); }
+.adapt-banner { border-radius: 10px; padding: 10px 12px; margin-top: 10px; font-size: 12px; line-height: 1.5; display: none; }
+.adapt-banner.show { display: block; }
+.adapt-banner.harder { background: rgba(61,214,140,0.08); border: 1px solid rgba(61,214,140,0.3); color: var(--green); }
+.adapt-banner.same { background: rgba(157,140,250,0.08); border: 1px solid rgba(157,140,250,0.3); color: var(--accent2); }
+.adapt-banner.easier { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.3); color: var(--orange); }
+.adapt-banner.back { background: rgba(240,80,80,0.08); border: 1px solid rgba(240,80,80,0.3); color: var(--red); }
+
+.rest-day-card { background: var(--surface); border: 1px dashed var(--border2); border-radius: 16px; padding: 18px; text-align: center; color: var(--text3); font-size: 13px; margin-bottom: 10px; }
+.rest-day-card .rest-emoji { font-size: 24px; margin-bottom: 6px; }
+
+/* ── TECHNIQUE ── */
+.technique-hero { background: linear-gradient(135deg, #1a1530 0%, #111118 100%); border: 1px solid var(--border2); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.technique-hero-title { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.technique-hero-sub { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+.glossary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+.glossary-term { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.glossary-term .term-icon { font-size: 18px; }
+.glossary-body { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.glossary-body strong { color: var(--text); }
+.glossary-example { background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 12px; color: var(--text2); }
+.glossary-example .ex-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+
+.tech-section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin: 16px 0 10px; }
+
+.exercise-guide { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+.exercise-guide-head { padding: 13px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.exercise-guide-title { font-size: 14px; font-weight: 700; }
+.exercise-guide-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.exercise-guide-arrow { color: var(--text3); font-size: 12px; transition: transform 0.2s; }
+.exercise-guide-arrow.open { transform: rotate(180deg); }
+.exercise-guide-body { display: none; padding: 0 14px 14px; }
+.step-list { list-style: none; }
+.step-item { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); }
+.step-item:first-child { border-top: none; }
+.step-num { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.step-text strong { color: var(--text); }
+.mistake-card { background: rgba(240,80,80,0.08); border: 1px solid rgba(240,80,80,0.25); border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+.mistake-title { font-size: 11px; color: var(--red); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
+.mistake-item { font-size: 12px; color: var(--text2); padding: 3px 0; padding-left: 14px; position: relative; }
+.mistake-item::before { content: '✗'; position: absolute; left: 0; color: var(--red); font-size: 10px; }
+
+.warmup-card { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.25); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.warmup-title { font-size: 11px; color: var(--orange); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+.warmup-item { font-size: 12px; color: var(--text2); padding: 3px 0; padding-left: 14px; position: relative; line-height: 1.4; }
+.warmup-item::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-size: 10px; top: 4px; }
+
+/* ── NUTRITION ── */
+.nut-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.nut-macro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.nut-macro-val { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent2); line-height: 1; margin-bottom: 3px; }
+.nut-macro-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.3px; }
+.meal-section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 10px; margin-top: 4px; }
+.meal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+.meal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; cursor: pointer; }
+.meal-name { font-size: 13px; font-weight: 600; }
+.meal-info { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.meal-arrow { color: var(--text3); font-size: 12px; transition: transform 0.2s; }
+.meal-arrow.open { transform: rotate(180deg); }
+.meal-body { display: none; padding: 0 14px 12px; }
+.food-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 7px 0; border-top: 1px solid var(--border); gap: 8px; }
+.food-item:first-child { border-top: none; }
+.food-n { font-size: 12px; color: var(--text); flex: 1; }
+.food-p { font-size: 11px; color: var(--accent2); font-weight: 600; }
+.food-k { font-size: 10px; color: var(--text3); }
+.tip-card { background: linear-gradient(135deg, #1a1530 0%, #111118 100%); border: 1px solid var(--border2); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
+.tip-card-title { font-size: 12px; font-weight: 600; color: var(--accent2); margin-bottom: 8px; }
+.tip-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(--text2); line-height: 1.4; }
+.tip-row:last-child { margin-bottom: 0; }
+
+/* ── PROGRESS ── */
+.max-display { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.max-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-align: center; position: relative; overflow: hidden; }
+.max-card::after { content: ''; position: absolute; bottom: -20px; right: -20px; width: 70px; height: 70px; background: var(--accent-glow); border-radius: 50%; filter: blur(20px); }
+.max-exname { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+.max-val { font-family: 'Unbounded', sans-serif; font-size: 40px; font-weight: 900; color: var(--accent2); line-height: 1; margin-bottom: 4px; }
+.max-delta { font-size: 12px; color: var(--green); font-weight: 600; }
+.test-input-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.test-card-title { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 12px; }
+.test-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.test-input-group label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 5px; }
+.test-input-large { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 700; text-align: center; padding: 12px 8px; outline: none; -webkit-appearance: none; }
+.test-input-large:focus { border-color: var(--accent); }
+.test-input-large::placeholder { color: var(--text3); font-size: 16px; }
+.save-test-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.save-test-btn:active { opacity: 0.8; }
+.history-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.history-title { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 12px; }
+.history-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.history-row:last-child { border-bottom: none; }
+.history-date { color: var(--text2); font-size: 12px; }
+.history-vals { display: flex; gap: 12px; }
+.history-val { color: var(--accent2); font-weight: 600; }
+.history-label { color: var(--text3); font-size: 11px; margin-left: 2px; }
+.empty-state { text-align: center; color: var(--text3); font-size: 13px; padding: 24px 0; }
+
+.toast { position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #0a0a0f; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: all 0.3s cubic-bezier(.34,1.56,.64,1); pointer-events: none; white-space: nowrap; z-index: 100; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="status-bar"></div>
+  <div class="header">
+    <div class="header-title">💪 <span>BOYKO</span> TRAINING</div>
+    <div class="header-week" id="header-week-badge">Нед 1</div>
+  </div>
+
+  <div class="scroll-content">
+
+    <!-- HOME -->
+    <div class="screen active" id="screen-home">
+      <div class="greeting">
+        <div class="greeting-name">Привет,<br><span>Стас</span> 👊</div>
+        <div class="greeting-sub">12-недельная программа · 93 кг</div>
+      </div>
+      <div id="install-hint-wrap">
+        <div class="install-hint">
+          <div style="font-size:20px;flex-shrink:0;margin-top:1px;">📲</div>
+          <div class="install-hint-text"><strong>Добавь на главный экран:</strong> нажми Поделиться → <strong>«На экран Домой»</strong></div>
+          <button class="install-dismiss" onclick="dismissHint()">×</button>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-mini"><div class="stat-mini-val" id="home-pullup">2</div><div class="stat-mini-label">Подт. макс</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" id="home-dip">2</div><div class="stat-mini-label">Брусья макс</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" id="home-done">0</div><div class="stat-mini-label">Тренировок</div></div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-card-title">Прогресс к цели</div>
+        <div class="progress-bar-row">
+          <div class="progress-bar-label">Подтягивания</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="prog-pullup" style="width:0%"></div></div>
+          <div class="progress-bar-val" id="prog-pullup-val">0%</div>
+        </div>
+        <div class="progress-bar-row">
+          <div class="progress-bar-label">Брусья</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="prog-dip" style="width:0%"></div></div>
+          <div class="progress-bar-val" id="prog-dip-val">0%</div>
+        </div>
+        <div class="progress-bar-row">
+          <div class="progress-bar-label">Программа</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="prog-overall" style="width:0%"></div></div>
+          <div class="progress-bar-val" id="prog-overall-val">0%</div>
+        </div>
+      </div>
+      <div class="next-session-card">
+        <div class="next-label">Следующая тренировка</div>
+        <div class="next-title" id="next-title">День 1 · Понедельник</div>
+        <div class="next-desc" id="next-desc">Подтягивания · Брусья</div>
+        <button class="next-btn" onclick="goToDiary()">Открыть дневник →</button>
+      </div>
+    </div>
+
+    <!-- DIARY -->
+    <div class="screen" id="screen-diary">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">‹</button>
+        <div class="week-nav-center">
+          <div class="week-nav-num" id="wn-num">Неделя 1</div>
+          <div class="week-nav-phase" id="wn-phase">Фаза 1 · Фундамент</div>
+        </div>
+        <button class="week-nav-btn" onclick="changeWeek(1)">›</button>
+      </div>
+      <div id="diary-sessions"></div>
+    </div>
+
+    <!-- TECHNIQUE -->
+    <div class="screen" id="screen-technique">
+
+      <div class="technique-hero">
+        <div class="technique-hero-title">📖 Как читать план тренировки</div>
+        <div class="technique-hero-sub">Здесь объяснено всё, что встречается в дневнике — что значат цифры, что такое негативы и как правильно делать упражнения.</div>
+      </div>
+
+      <div class="tech-section-title">Что означают цифры</div>
+
+      <div class="glossary-card">
+        <div class="glossary-term"><span class="term-icon">🔢</span> Что значит «3×1»</div>
+        <div class="glossary-body">
+          Запись <strong>3×1</strong> — это <strong>3 подхода по 1 повторению</strong>.<br><br>
+          Подход — сделал упражнение, отдохнул. Повторение — один раз выполнил движение.<br><br>
+          Между подходами отдыхаешь <strong>2–3 минуты</strong> — обязательно, не спеши.
+        </div>
+        <div class="glossary-example">
+          <div class="ex-title">Пример: 5×3 = пять подходов</div>
+          Подход 1: подтянулся 3 раза → <strong>отдых 2–3 мин</strong><br>
+          Подход 2: подтянулся 3 раза → <strong>отдых 2–3 мин</strong><br>
+          Подход 3: подтянулся 3 раза → <strong>отдых 2–3 мин</strong><br>
+          Подход 4, 5 — аналогично.
+        </div>
+      </div>
+
+      <div class="glossary-card">
+        <div class="glossary-term"><span class="term-icon">⬇️</span> Что такое негативное повторение</div>
+        <div class="glossary-body">
+          Негатив — это <strong>только медленное опускание вниз</strong>, без подъёма.<br><br>
+          При весе 93 кг мышцы пока не тянут тело вверх, но уже могут <strong>контролировать опускание</strong>. Именно так нарабатывается сила для полноценных подтягиваний.
+        </div>
+        <div class="glossary-example">
+          <div class="ex-title">Как делать негатив на перекладине</div>
+          1. Встань на скамейку или запрыгни — оказался в верхней точке, <strong>подбородок над перекладиной</strong><br>
+          2. Убери ноги и начинай медленно опускаться — <strong>считай про себя: 1, 2, 3, 4, 5</strong><br>
+          3. Когда руки выпрямились — слезь и повтори снова
+        </div>
+        <div class="negative-tip">
+          <b>Запись «3×1 + 2 негатива»</b> означает: в каждом из 3 подходов — сделай 1 полное подтягивание, затем ещё 2 раза только опустись за 5 секунд.
+        </div>
+      </div>
+
+      <div class="glossary-card">
+        <div class="glossary-term"><span class="term-icon">⏱️</span> Почему важен отдых между подходами</div>
+        <div class="glossary-body">
+          Это силовые упражнения, не кардио. Мышцам нужно <strong>2–3 минуты</strong> чтобы восстановить запас энергии (АТФ) для следующего подхода.<br><br>
+          Если отдыхать меньше — следующий подход провалишь и перегрузишь суставы.
+        </div>
+      </div>
+
+      <div class="warmup-card">
+        <div class="warmup-title">🔥 Разминка перед каждой тренировкой (5 мин)</div>
+        <div class="warmup-item">Вращения плечами вперёд и назад — 20 раз</div>
+        <div class="warmup-item">Вис на перекладине — 3 раза по 20 секунд</div>
+        <div class="warmup-item">Отжимания от стены — 10 раз</div>
+        <div class="warmup-item">Круговые движения запястьями — 15 раз</div>
+      </div>
+
+      <div class="tech-section-title">Техника упражнений</div>
+
+      <div class="exercise-guide">
+        <div class="exercise-guide-head" onclick="toggleGuide('g-pullup')">
+          <div>
+            <div class="exercise-guide-title">Подтягивания</div>
+            <div class="exercise-guide-sub">Прямой хват, ширина чуть шире плеч</div>
+          </div>
+          <div class="exercise-guide-arrow" id="garr-g-pullup">▾</div>
+        </div>
+        <div class="exercise-guide-body" id="g-pullup">
+          <ul class="step-list">
+            <li class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>Хват</strong> — чуть шире плеч, ладони смотрят от тебя. Большой палец обхватывает перекладину снизу.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>Перед подъёмом</strong> — сведи лопатки вниз и назад, как будто кладёшь их в задние карманы брюк. Это активирует широчайшие.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>Подъём</strong> — тяни <strong>локти вниз к бёдрам</strong>, а не сгибай руки. Представь, что хочешь сломать перекладину пополам.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong>Верхняя точка</strong> — подбородок выше перекладины. Пауза 1 секунду если план это предполагает.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">5</div>
+              <div class="step-text"><strong>Опускание</strong> — медленно, за 2–3 секунды. Не падай вниз — это теряет половину нагрузки.</div>
+            </li>
+          </ul>
+          <div class="mistake-card">
+            <div class="mistake-title">❌ Частые ошибки</div>
+            <div class="mistake-item">Раскачиваться — читерство и нагрузка на поясницу</div>
+            <div class="mistake-item">Задирать подбородок вместо подъёма тела</div>
+            <div class="mistake-item">Не разгибать руки полностью внизу</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-guide">
+        <div class="exercise-guide-head" onclick="toggleGuide('g-dip')">
+          <div>
+            <div class="exercise-guide-title">Отжимания на брусьях</div>
+            <div class="exercise-guide-sub">Ширина брусьев — чуть шире плеч</div>
+          </div>
+          <div class="exercise-guide-arrow" id="garr-g-dip">▾</div>
+        </div>
+        <div class="exercise-guide-body" id="g-dip">
+          <ul class="step-list">
+            <li class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>Старт</strong> — руки выпрямлены, тело вертикально, плечи над запястьями. Ноги скрещены или прямые.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>Наклон корпуса</strong> — чуть наклонись вперёд (10–15°). Это подключает грудь, иначе работает только трицепс и быстро устаёт.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>Опускание</strong> — медленно вниз до угла <strong>90° в локте</strong> (плечо параллельно полу). Не ниже — нагрузка на плечевой сустав.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong>Подъём</strong> — толкай брусья вниз, выжимай себя вверх. Не выпрямляй локти в замок — останови чуть раньше.</div>
+            </li>
+          </ul>
+          <div class="mistake-card">
+            <div class="mistake-title">❌ Частые ошибки</div>
+            <div class="mistake-item">Опускаться слишком глубоко — боль в плечах</div>
+            <div class="mistake-item">Держать корпус вертикально — тогда только трицепс</div>
+            <div class="mistake-item">Разводить локти в стороны — нагрузка уходит не туда</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="exercise-guide">
+        <div class="exercise-guide-head" onclick="toggleGuide('g-aussie')">
+          <div>
+            <div class="exercise-guide-title">Австралийские подтягивания</div>
+            <div class="exercise-guide-sub">Горизонтальные, вспомогательное упражнение</div>
+          </div>
+          <div class="exercise-guide-arrow" id="garr-g-aussie">▾</div>
+        </div>
+        <div class="exercise-guide-body" id="g-aussie">
+          <ul class="step-list">
+            <li class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong>Исходное положение</strong> — лечь под низкую перекладину (на высоте груди), взяться прямым хватом. Тело прямое, пятки на полу, руки выпрямлены.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong>Подъём</strong> — тяни грудь к перекладине, локти идут вдоль тела назад. Тело остаётся прямым как доска.</div>
+            </li>
+            <li class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong>Опускание</strong> — медленно, контролируемо. Это вспомогательное упражнение — здесь можно делать больше повторений.</div>
+            </li>
+          </ul>
+          <div class="negative-tip">
+            Если нет низкой перекладины — подойдёт стол, стул со спинкой или шведская стенка. Главное чтобы можно было висеть горизонтально.
+          </div>
+        </div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>
+
+    <!-- NUTRITION -->
+    <div class="screen" id="screen-nutrition">
+      <div class="nut-macros">
+        <div class="nut-macro-card"><div class="nut-macro-val">2700</div><div class="nut-macro-label">ккал</div></div>
+        <div class="nut-macro-card"><div class="nut-macro-val">165г</div><div class="nut-macro-label">белок</div></div>
+        <div class="nut-macro-card"><div class="nut-macro-val">310г</div><div class="nut-macro-label">углев.</div></div>
+        <div class="nut-macro-card"><div class="nut-macro-val">75г</div><div class="nut-macro-label">жиры</div></div>
+      </div>
+      <div class="meal-section-title">В день тренировки</div>
+      <div id="meals-container"></div>
+      <div class="tip-card">
+        <div class="tip-card-title">⚡ Ключевые правила</div>
+        <div class="tip-row"><span>🍚</span><span>Углеводы до тренировки, белок после</span></div>
+        <div class="tip-row"><span>💧</span><span>2.5–3 литра воды в день</span></div>
+        <div class="tip-row"><span>⏰</span><span>За 30 мин до тренировки — только вода</span></div>
+        <div class="tip-row"><span>🌙</span><span>Творог на ночь — медленный белок на 7–8 часов</span></div>
+        <div class="tip-row"><span>🗓</span><span>В дни отдыха убери предтренировочный приём</span></div>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="screen" id="screen-progress">
+      <div class="max-display">
+        <div class="max-card">
+          <div class="max-exname">Подтягивания</div>
+          <div class="max-val" id="max-pullup-val">2</div>
+          <div class="max-delta" id="max-pullup-delta"></div>
+        </div>
+        <div class="max-card">
+          <div class="max-exname">Брусья</div>
+          <div class="max-val" id="max-dip-val">2</div>
+          <div class="max-delta" id="max-dip-delta"></div>
+        </div>
+      </div>
+      <div class="test-input-card">
+        <div class="test-card-title">🏆 Записать тест максимума</div>
+        <div class="test-inputs">
+          <div class="test-input-group"><label>Подтягивания</label><input class="test-input-large" id="inp-pullup" type="number" min="0" max="50" placeholder="0"></div>
+          <div class="test-input-group"><label>Брусья</label><input class="test-input-large" id="inp-dip" type="number" min="0" max="50" placeholder="0"></div>
+        </div>
+        <button class="save-test-btn" onclick="saveTest()">Сохранить результат</button>
+      </div>
+      <div class="history-card">
+        <div class="history-title">История тестов</div>
+        <div id="test-history"><div class="empty-state">Тесты появятся здесь</div></div>
+      </div>
+    </div>
+
+  </div><!-- /scroll-content -->
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showScreen('home', this)">
+      <span class="tab-icon">🏠</span><span class="tab-label">Главная</span>
+    </button>
+    <button class="tab-btn" onclick="showScreen('diary', this)">
+      <span class="tab-icon">📋</span><span class="tab-label">Дневник</span>
+    </button>
+    <button class="tab-btn" onclick="showScreen('technique', this)">
+      <span class="tab-icon">📖</span><span class="tab-label">Техника</span>
+    </button>
+    <button class="tab-btn" onclick="showScreen('nutrition', this)">
+      <span class="tab-icon">🥩</span><span class="tab-label">Питание</span>
+    </button>
+    <button class="tab-btn" onclick="showScreen('progress', this)">
+      <span class="tab-icon">📈</span><span class="tab-label">Прогресс</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WEEKS = [
+  {phase:'Фаза 1 · Фундамент', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'3×1 + 2 негатива', scheme:'3 подхода × 1 повт. + 2 негатива', type:'pullup', steps:['Сделай <strong>1 полное подтягивание</strong>','Затем <strong>2 раза медленно опустись</strong> из верхней точки — каждый за 5 секунд','Это и есть один подход. Отдохни <strong>2–3 минуты</strong>, повтори 3 раза']},
+      {n:'Брусья', p:'3×1 + 2 негатива', scheme:'3 подхода × 1 повт. + 2 негатива', type:'dip', steps:['Сделай <strong>1 полное отжимание</strong> на брусьях','Затем <strong>2 раза медленно опустись</strong> — каждый за 5 секунд','Отдохни <strong>2–3 минуты</strong>, повтори 3 раза']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница', exs:[
+      {n:'Подтягивания', p:'3×1 + 3 негатива', scheme:'3 подхода × 1 повт. + 3 негатива', type:'pullup', steps:['Сделай <strong>1 полное подтягивание</strong>','Затем <strong>3 медленных опускания</strong> из верхней точки по 5 секунд','Отдых <strong>2–3 минуты</strong> между подходами']},
+      {n:'Брусья', p:'3×1 + 3 негатива', scheme:'3 подхода × 1 повт. + 3 негатива', type:'dip', steps:['Сделай <strong>1 полное отжимание</strong>','Затем <strong>3 медленных опускания</strong> по 5 секунд','Отдых <strong>2–3 минуты</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 1 · Фундамент', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'4×2 + 1 негатив', scheme:'4 подхода × 2 повт. + 1 негатив', type:'pullup', steps:['Подтянись <strong>2 раза подряд</strong>','Затем <strong>1 медленное опускание</strong> за 5 секунд','Отдых <strong>2–3 мин</strong>, 4 таких подхода']},
+      {n:'Брусья', p:'4×2 + 1 негатив', scheme:'4 подхода × 2 повт. + 1 негатив', type:'dip', steps:['Отожмись на брусьях <strong>2 раза</strong>','Затем <strong>1 медленное опускание</strong>','Отдых <strong>2–3 мин</strong>, 4 подхода']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница', exs:[
+      {n:'Подтягивания', p:'4×2 + 2 негатива', scheme:'4 подхода × 2 повт. + 2 негатива', type:'pullup', steps:['Подтянись <strong>2 раза</strong>','Затем <strong>2 медленных опускания</strong> по 5 секунд','Отдых <strong>2–3 мин</strong>, 4 подхода']},
+      {n:'Брусья', p:'4×2 + 2 негатива', scheme:'4 подхода × 2 повт. + 2 негатива', type:'dip', steps:['Отожмись <strong>2 раза</strong>','Затем <strong>2 медленных опускания</strong>','Отдых <strong>2–3 мин</strong>, 4 подхода']},
+    ]},
+  ]},
+  {phase:'Фаза 1 · Фундамент', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'4×3 — чистая техника', scheme:'4 подхода × 3 повторения', type:'pullup', steps:['Подтянись <strong>3 раза подряд</strong> без рывков','Акцент на <strong>медленное опускание</strong> — 2–3 секунды вниз','Отдых <strong>2–3 мин</strong>, 4 подхода']},
+      {n:'Брусья', p:'4×3', scheme:'4 подхода × 3 повторения', type:'dip', steps:['Отожмись <strong>3 раза</strong> с правильным наклоном вперёд','Каждое опускание — <strong>2–3 секунды</strong>','Отдых <strong>2–3 мин</strong>, 4 подхода']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница', exs:[
+      {n:'Подтягивания', p:'5×3', scheme:'5 подходов × 3 повторения', type:'pullup', steps:['Подтянись <strong>3 раза</strong>','Отдых <strong>2–3 мин</strong>','Повтори <strong>5 раз</strong>']},
+      {n:'Брусья', p:'5×3', scheme:'5 подходов × 3 повторения', type:'dip', steps:['Отожмись <strong>3 раза</strong>','Отдых <strong>2–3 мин</strong>','Повтори <strong>5 раз</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 2 · Объём', sessions:[
+    {day:'Пн — Тяга', exs:[
+      {n:'Подтягивания', p:'5×3', scheme:'5 подходов × 3 повторения', type:'pullup', steps:['5 подходов по <strong>3 подтягивания</strong>','Отдых <strong>2–3 мин</strong> между подходами']},
+      {n:'Австралийские подт.', p:'3×8', scheme:'3 подхода × 8 повторений', type:'aux', steps:['Горизонтальные подтягивания — <strong>лечь под низкую перекладину</strong>','Тело прямое, тянуть грудь к перекладине — <strong>8 раз</strong>','Раздел «Техника» → Австралийские подтягивания']},
+    ]},
+    {day:'Ср — Толчок', exs:[
+      {n:'Брусья', p:'5×3', scheme:'5 подходов × 3 повторения', type:'dip', steps:['5 подходов по <strong>3 отжимания</strong> на брусьях','Отдых <strong>2–3 мин</strong>']},
+      {n:'Отжимания от пола', p:'3×10', scheme:'3 подхода × 10 повторений', type:'aux', steps:['Обычные отжимания от пола — <strong>10 раз</strong>','Тело прямое, локти не торчат в стороны','Отдых <strong>90 секунд</strong>']},
+    ]},
+    {day:'Пт — Комби', exs:[
+      {n:'Подтягивания', p:'4×3', scheme:'4 подхода × 3 повторения', type:'pullup', steps:['4 подхода по <strong>3 подтягивания</strong>','Отдых <strong>2–3 мин</strong>']},
+      {n:'Брусья', p:'4×3', scheme:'4 подхода × 3 повторения', type:'dip', steps:['4 подхода по <strong>3 отжимания</strong>','Отдых <strong>2–3 мин</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 2 · Объём', sessions:[
+    {day:'Пн — Тяга', exs:[
+      {n:'Подтягивания', p:'5×4', scheme:'5 подходов × 4 повторения', type:'pullup', steps:['5 подходов по <strong>4 подтягивания</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Австралийские подт.', p:'3×10', scheme:'3 подхода × 10 повторений', type:'aux', steps:['3 подхода по <strong>10 горизонтальных подтягиваний</strong>','Отдых <strong>90 сек</strong>']},
+    ]},
+    {day:'Ср — Толчок', exs:[
+      {n:'Брусья', p:'5×4', scheme:'5 подходов × 4 повторения', type:'dip', steps:['5 подходов по <strong>4 отжимания</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Отжимания от пола', p:'3×12', scheme:'3 подхода × 12 повторений', type:'aux', steps:['3 подхода по <strong>12 отжиманий</strong>','Отдых <strong>90 сек</strong>']},
+    ]},
+    {day:'Пт — Комби', exs:[
+      {n:'Подтягивания', p:'4×4', scheme:'4 подхода × 4 повторения', type:'pullup', steps:['4 × <strong>4 подтягивания</strong>','Отдых <strong>2–3 мин</strong>']},
+      {n:'Брусья', p:'4×4', scheme:'4 подхода × 4 повторения', type:'dip', steps:['4 × <strong>4 отжимания</strong>','Отдых <strong>2–3 мин</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 2 · Разгрузка + ТЕСТ', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'3×3 — лёгко', scheme:'3 подхода × 3 повторения', type:'pullup', steps:['Разгрузочная неделя — <strong>снижаем объём</strong>','3 × <strong>3 подтягивания</strong> в комфортном темпе']},
+      {n:'Брусья', p:'3×3 — лёгко', scheme:'3 подхода × 3 повторения', type:'dip', steps:['3 × <strong>3 отжимания</strong>','Цель — восстановиться перед тестом']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница — ТЕСТ 🏆', exs:[
+      {n:'Подтягивания MAX', p:'1 подход до отказа', scheme:'Максимум за 1 подход', type:'pullup', steps:['Отдохни и разогрейся — <strong>не устай перед тестом</strong>','Подтянись столько раз, сколько сможешь с правильной техникой','Запиши результат в раздел <strong>«Прогресс»</strong>']},
+      {n:'Брусья MAX', p:'1 подход до отказа', scheme:'Максимум за 1 подход', type:'dip', steps:['Отдых 10 минут после теста подтягиваний','Отожмись максимальное количество раз','Запиши результат']},
+    ]},
+  ]},
+  {phase:'Фаза 3 · Интенсивность', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'6×4 (пауза 1с вверху)', scheme:'6 подходов × 4 повторения', type:'pullup', steps:['Подтянись 4 раза, в <strong>верхней точке каждого — пауза 1 секунда</strong>','Это сложнее — ты удерживаешь себя вверху','Отдых <strong>3 минуты</strong>, 6 подходов']},
+      {n:'Австралийские подт.', p:'3×12', scheme:'3 подхода × 12 повторений', type:'aux', steps:['3 × <strong>12 горизонтальных подтягиваний</strong>']},
+    ]},
+    {day:'Среда', exs:[
+      {n:'Брусья', p:'6×4 (темп вниз 3с)', scheme:'6 подходов × 4 повторения', type:'dip', steps:['Каждое опускание — ровно <strong>3 секунды вниз</strong>','4 таких повторения = один подход','Отдых <strong>3 минуты</strong>, 6 подходов']},
+      {n:'Отжимания от пола', p:'4×12', scheme:'4 подхода × 12 повторений', type:'aux', steps:['4 × <strong>12 отжиманий</strong>']},
+    ]},
+    {day:'Пятница', exs:[
+      {n:'Подтягивания', p:'4×5', scheme:'4 подхода × 5 повторений', type:'pullup', steps:['4 × <strong>5 подтягиваний</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Брусья', p:'4×5', scheme:'4 подхода × 5 повторений', type:'dip', steps:['4 × <strong>5 отжиманий</strong>','Отдых <strong>3 мин</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 3 · Интенсивность', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'5×5', scheme:'5 подходов × 5 повторений', type:'pullup', steps:['Классика силовых — <strong>5×5</strong>','5 подходов по <strong>5 подтягиваний</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Австралийские подт.', p:'4×12', scheme:'4 подхода × 12 повторений', type:'aux', steps:['4 × <strong>12 горизонтальных подтягиваний</strong>']},
+    ]},
+    {day:'Среда', exs:[
+      {n:'Брусья', p:'5×5', scheme:'5 подходов × 5 повторений', type:'dip', steps:['5 × <strong>5 отжиманий</strong> на брусьях','Отдых <strong>3 мин</strong>']},
+      {n:'Отжимания от пола', p:'4×15', scheme:'4 подхода × 15 повторений', type:'aux', steps:['4 × <strong>15 отжиманий</strong>']},
+    ]},
+    {day:'Пятница', exs:[
+      {n:'Подтягивания', p:'5×5', scheme:'5 подходов × 5 повторений', type:'pullup', steps:['5 × <strong>5 подтягиваний</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Брусья', p:'5×5', scheme:'5 подходов × 5 повторений', type:'dip', steps:['5 × <strong>5 отжиманий</strong>','Отдых <strong>3 мин</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 3 · Разгрузка + ТЕСТ', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'3×4 — лёгко', scheme:'3 подхода × 4 повторения', type:'pullup', steps:['Разгрузка — <strong>снижаем объём</strong> перед тестом','3 × <strong>4 подтягивания</strong> без напряжения']},
+      {n:'Брусья', p:'3×4 — лёгко', scheme:'3 подхода × 4 повторения', type:'dip', steps:['3 × <strong>4 отжимания</strong>']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница — ТЕСТ 🏆', exs:[
+      {n:'Подтягивания MAX', p:'1 подход до отказа', scheme:'Максимум за 1 подход', type:'pullup', steps:['Тест — максимальное количество раз','Сравни с результатом 6-й недели','Запиши в <strong>«Прогресс»</strong>']},
+      {n:'Брусья MAX', p:'1 подход до отказа', scheme:'Максимум за 1 подход', type:'dip', steps:['Тест брусьев после 10 мин отдыха','Запиши результат']},
+    ]},
+  ]},
+  {phase:'Фаза 4 · Выход на цель', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'5×6', scheme:'5 подходов × 6 повторений', type:'pullup', steps:['5 × <strong>6 подтягиваний</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Австралийские подт.', p:'4×15', scheme:'4 подхода × 15 повторений', type:'aux', steps:['4 × <strong>15 горизонтальных подтягиваний</strong>']},
+    ]},
+    {day:'Среда', exs:[
+      {n:'Брусья', p:'5×6', scheme:'5 подходов × 6 повторений', type:'dip', steps:['5 × <strong>6 отжиманий</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Отжимания от пола', p:'4×20', scheme:'4 подхода × 20 повторений', type:'aux', steps:['4 × <strong>20 отжиманий</strong>']},
+    ]},
+    {day:'Пятница', exs:[
+      {n:'Суперсет: Подт.→Брусья', p:'5 кругов × 5+5', scheme:'5 кругов: 5 подтягиваний + 5 брусьев', type:'super', steps:['<strong>Суперсет</strong> — два упражнения без отдыха между ними','Подтянись <strong>5 раз</strong> → сразу иди на брусья и отожмись <strong>5 раз</strong>','Это 1 круг. Отдохни <strong>2 минуты</strong>. Повтори <strong>5 кругов</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 4 · Выход на цель', sessions:[
+    {day:'Понедельник', exs:[
+      {n:'Подтягивания', p:'4×7', scheme:'4 подхода × 7 повторений', type:'pullup', steps:['4 × <strong>7 подтягиваний</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Австралийские подт.', p:'3×15', scheme:'3 подхода × 15 повторений', type:'aux', steps:['3 × <strong>15 горизонтальных подтягиваний</strong>']},
+    ]},
+    {day:'Среда', exs:[
+      {n:'Брусья', p:'4×8', scheme:'4 подхода × 8 повторений', type:'dip', steps:['4 × <strong>8 отжиманий</strong>','Отдых <strong>3 мин</strong>']},
+      {n:'Отжимания от пола', p:'3×20', scheme:'3 подхода × 20 повторений', type:'aux', steps:['3 × <strong>20 отжиманий</strong>']},
+    ]},
+    {day:'Пятница', exs:[
+      {n:'Суперсет: Подт.→Брусья', p:'5 кругов × 6+6', scheme:'5 кругов: 6 подтягиваний + 6 брусьев', type:'super', steps:['Подтянись <strong>6 раз</strong> → сразу брусья <strong>6 раз</strong>','Это 1 круг. Отдых <strong>2 мин</strong>. Повтори <strong>5 кругов</strong>']},
+    ]},
+  ]},
+  {phase:'Фаза 4 · ФИНАЛ 🏆', sessions:[
+    {day:'Понедельник — Активация', exs:[
+      {n:'Подтягивания', p:'3×4 — не устать!', scheme:'3 подхода × 4 повторения', type:'pullup', steps:['Лёгкая активация перед финальным тестом','3 × <strong>4 подтягивания</strong> — <strong>не до усталости!</strong>','Цель — разогреться, не потратить силы']},
+      {n:'Брусья', p:'3×4 — не устать!', scheme:'3 подхода × 4 повторения', type:'dip', steps:['3 × <strong>4 отжимания</strong> — легко и чисто']},
+    ]},
+    {day:'Среда', rest:true},
+    {day:'Пятница — ФИНАЛ 🏆🏆', exs:[
+      {n:'Подтягивания MAX', p:'1 подход до отказа — ФИНАЛ', scheme:'Финальный тест — максимум', type:'pullup', steps:['<strong>Это финальный тест программы!</strong>','Хорошо разогрейся, потряси руки','Подтянись столько раз сколько можешь — <strong>цель: 10–12</strong>','Запиши в «Прогресс» и сравни со стартом']},
+      {n:'Брусья MAX', p:'1 подход до отказа — ФИНАЛ', scheme:'Финальный тест — максимум', type:'dip', steps:['Отдых 10 мин после подтягиваний','Отожмись максимально — <strong>цель: 12–15</strong>','Поздравляю — 12 недель позади!']},
+    ]},
+  ]},
+];
+
+const MEALS = [
+  {name:'🌅 Завтрак · 7:00', kcal:'~650 ккал', protein:'42г белка', items:[
+    {n:'Овсянка на воде, 80г', p:'10г', k:'300 ккал'},
+    {n:'Яйца × 3 целых', p:'18г', k:'210 ккал'},
+    {n:'Творог 5%, 100г', p:'14г', k:'120 ккал'},
+  ]},
+  {name:'🍎 Перекус · 11:00', kcal:'~300 ккал', protein:'25г белка', items:[
+    {n:'Творог 5%, 200г', p:'24г', k:'200 ккал'},
+    {n:'Банан × 1', p:'1г', k:'100 ккал'},
+  ]},
+  {name:'🍗 Обед · 13:30', kcal:'~750 ккал', protein:'50г белка', items:[
+    {n:'Куриная грудка, 200г', p:'42г', k:'220 ккал'},
+    {n:'Гречка варёная, 250г', p:'8г', k:'330 ккал'},
+    {n:'Овощи + масло 1 ч.л.', p:'2г', k:'100 ккал'},
+  ]},
+  {name:'⚡ Перед трен. · за 1.5ч', kcal:'~400 ккал', protein:'20г белка', items:[
+    {n:'Рис варёный, 200г', p:'5г', k:'260 ккал'},
+    {n:'Яйца × 2', p:'12г', k:'140 ккал'},
+    {n:'⚠️ За 30 мин — только вода', p:'—', k:'—'},
+  ]},
+  {name:'🔄 После тренировки · 1ч', kcal:'~350 ккал', protein:'35г белка', items:[
+    {n:'Куриная грудка, 150г', p:'31г', k:'165 ккал'},
+    {n:'Хлеб цельнозерн. × 2', p:'7г', k:'160 ккал'},
+  ]},
+  {name:'🌙 Ужин · 20:00', kcal:'~250 ккал', protein:'30г белка', items:[
+    {n:'Творог 5%, 250г', p:'30г', k:'250 ккал'},
+    {n:'Медленный белок на ночь', p:'—', k:'—'},
+  ]},
+];
+
+const typeIcon = {pullup:'🔝', dip:'💪', aux:'🔧', super:'⚡'};
+const typeLabel = {pullup:'Подтягивания', dip:'Брусья', aux:'Вспомогательное', super:'Суперсет'};
+
+let currentWeek = 0;
+let diary = JSON.parse(localStorage.getItem('diary2') || '{}');
+let maxes = JSON.parse(localStorage.getItem('maxes2') || '{"pullup":2,"dip":2,"history":[]}');
+let openSessions = {};
+
+function init() {
+  renderMeals();
+  renderDiary();
+  updateHome();
+  updateProgress();
+  if (localStorage.getItem('hint_dismissed')) {
+    const el = document.getElementById('install-hint-wrap');
+    if (el) el.style.display = 'none';
+  }
+}
+
+function dismissHint() {
+  document.getElementById('install-hint-wrap').style.display = 'none';
+  localStorage.setItem('hint_dismissed', '1');
+}
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const sc = document.querySelector('.scroll-content');
+  if (sc) sc.scrollTop = 0;
+  if (id === 'progress') updateProgress();
+  if (id === 'home') updateHome();
+}
+
+function goToDiary() {
+  document.querySelectorAll('.tab-btn')[1].click();
+}
+
+function changeWeek(d) {
+  currentWeek = Math.max(0, Math.min(11, currentWeek + d));
+  renderDiary();
+}
+
+function renderDiary() {
+  const w = WEEKS[currentWeek];
+  document.getElementById('wn-num').textContent = 'Неделя ' + (currentWeek + 1);
+  document.getElementById('wn-phase').textContent = w.phase;
+  document.getElementById('header-week-badge').textContent = 'Нед ' + (currentWeek + 1);
+  let html = '';
+  w.sessions.forEach((s, si) => {
+    const key = 'w' + currentWeek + '_s' + si;
+    if (s.rest) {
+      html += '<div class="rest-day-card"><div class="rest-emoji">😴</div>' + s.day + ' — Отдых и восстановление<br><span style="font-size:11px;margin-top:4px;display:block;">Мышцы растут именно сейчас</span></div>';
+      return;
+    }
+    const isDone = diary[key + '_done'];
+    const isOpen = openSessions[key];
+    html += '<div class="session-card ' + (isDone ? 'done-card' : '') + '">'
+      + '<div class="session-head" onclick="toggleSession(\'' + key + '\')">'
+      + '<div><div class="session-day">' + s.day + '</div>'
+      + '<div class="session-meta">' + s.exs.length + ' упр. · Отдых 2–3 мин между подходами</div></div>'
+      + '<div class="done-badge ' + (isDone ? 'is-done' : '') + '" onclick="event.stopPropagation();quickDone(\'' + key + '\')">'
+      + (isDone ? '✓ Готово' : '○ Готово') + '</div>'
+      + '</div>'
+      + (isOpen ? renderBody(s, key) : '')
+      + '</div>';
+  });
+  document.getElementById('diary-sessions').innerHTML = html;
+}
+
+function renderBody(s, key) {
+  const isDone = diary[key + '_done'];
+  let html = '<div class="session-body"><div class="divider"></div>';
+  s.exs.forEach((ex, ei) => {
+    // parse sets/reps from scheme e.g. "5 подходов × 3 повторения" or "3 подхода × 1 повт. + 2 негатива"
+    const planSets = parseSets(ex.scheme);
+    const planReps = parseReps(ex.scheme);
+    // check if prev session set an override for this exercise
+    const override = diary[key + '_override' + ei];
+    const effectiveReps = override !== undefined ? override : planReps;
+    // load saved reps per set
+    const savedSets = diary[key + '_sets' + ei] ? JSON.parse(diary[key + '_sets' + ei]) : Array(planSets).fill(effectiveReps);
+
+    html += '<div class="ex-plan-card">'
+      + '<div class="ex-plan-name">' + (typeIcon[ex.type] || '•') + ' ' + ex.n
+      + ' <span class="ex-plan-badge">' + (typeLabel[ex.type] || '') + '</span></div>'
+      + '<div class="ex-plan-scheme">' + ex.scheme + (override !== undefined ? ' <span style="font-size:11px;color:var(--orange);font-family:Inter,sans-serif;font-weight:500;">→ адаптировано: ' + effectiveReps + ' повт.</span>' : '') + '</div>'
+      + '<ul class="ex-plan-steps">'
+      + ex.steps.map(st => '<li>' + st + '</li>').join('')
+      + '</ul>';
+
+    if (ex.type === 'pullup' || ex.type === 'dip' || ex.type === 'aux') {
+      html += '<div class="sets-tracker">'
+        + '<div class="sets-tracker-title">📝 Записать подходы — план: ' + effectiveReps + ' повт.</div>';
+      for (let si2 = 0; si2 < planSets; si2++) {
+        const reps = savedSets[si2] !== undefined ? savedSets[si2] : effectiveReps;
+        const cls = reps > effectiveReps ? 'over' : reps < effectiveReps ? 'under' : '';
+        html += '<div class="set-row">'
+          + '<div class="set-label">Подход ' + (si2+1) + '</div>'
+          + '<div class="set-controls">'
+          + '<button class="set-btn" onclick="changeRep(\'' + key + '\',' + ei + ',' + si2 + ',-1)">−</button>'
+          + '<div class="set-val ' + cls + '" id="' + key + '_sv_' + ei + '_' + si2 + '">' + reps + '</div>'
+          + '<button class="set-btn" onclick="changeRep(\'' + key + '\',' + ei + ',' + si2 + ',1)">+</button>'
+          + '</div>'
+          + '<div class="set-plan-ref">план: ' + effectiveReps + '</div>'
+          + '</div>';
+      }
+      // adaptation hint
+      const adapt = getAdaptHint(key, ei, planSets, effectiveReps, savedSets);
+      html += '<div class="adapt-banner ' + (adapt ? adapt.cls + ' show' : '') + '" id="' + key + '_ab' + ei + '">'
+        + (adapt ? adapt.msg : '') + '</div>';
+      html += '</div>'; // sets-tracker
+    } else {
+      // supersets — simple text
+      const fact = diary[key + '_f' + ei] || '';
+      html += '<input class="ex-input" id="' + key + '_f' + ei + '" value="' + fact + '" placeholder="что по факту сделал" onchange="saveFact(\'' + key + '\',' + ei + ')" style="margin-top:8px;width:100%;text-align:left;padding:8px 10px;font-size:12px;">';
+    }
+    html += '</div>'; // ex-plan-card
+  });
+
+  const feel = diary[key + '_feel'] || '';
+  const note = diary[key + '_note'] || '';
+  html += '<div class="feel-label">Как прошла тренировка?</div>'
+    + '<div class="feel-row">'
+    + ['😊','💪','😤','❌'].map(f => '<div class="feel-btn ' + (feel===f?'selected':'') + '" onclick="setFeel(\'' + key + '\',\'' + f + '\')">' + f + '</div>').join('')
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin:-6px 0 10px;">'
+    + '<span>Легко</span><span>В меру</span><span>Тяжело</span><span>Провал</span>'
+    + '</div>'
+    + '<textarea class="note-input" id="' + key + '_note" rows="2" placeholder="Заметки: что болит, что удивило, настроение..." onchange="saveNote(\'' + key + '\')">' + note + '</textarea>'
+    + '<button class="mark-done-btn ' + (isDone?'already-done':'') + '" onclick="markDone(\'' + key + '\')">'
+    + (isDone ? '✓ Тренировка выполнена' : '✓ Отметить выполненной') + '</button>'
+    + '</div>';
+  return html;
+}
+
+// Parse sets count from scheme string
+function parseSets(scheme) {
+  const m = scheme.match(/^(\d+)\s*(подход|круг)/i);
+  return m ? parseInt(m[1]) : 3;
+}
+// Parse reps from scheme string
+function parseReps(scheme) {
+  const m = scheme.match(/×\s*(\d+)\s*(повтор|повт)/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+// Change rep count for a set and save
+function changeRep(key, ei, si2, delta) {
+  const planSets = parseSets(WEEKS[currentWeek].sessions.find((s,idx) => !s.rest && 'w'+currentWeek+'_s'+idx === key || false)?.exs[ei]?.scheme || '') || 3;
+  // rebuild saved array
+  const w = WEEKS[currentWeek];
+  let session = null;
+  w.sessions.forEach((s, idx) => { if ('w'+currentWeek+'_s'+idx === key) session = s; });
+  if (!session) return;
+  const ex = session.exs[ei];
+  const planRepsVal = parseReps(ex.scheme);
+  const planSetsVal = parseSets(ex.scheme);
+  let saved = diary[key + '_sets' + ei] ? JSON.parse(diary[key + '_sets' + ei]) : Array(planSetsVal).fill(planRepsVal);
+  if (saved.length < planSetsVal) saved = Array(planSetsVal).fill(planRepsVal).map((v,i) => saved[i] !== undefined ? saved[i] : v);
+  saved[si2] = Math.max(0, (saved[si2] || planRepsVal) + delta);
+  diary[key + '_sets' + ei] = JSON.stringify(saved);
+  localStorage.setItem('diary2', JSON.stringify(diary));
+
+  // update DOM directly without full re-render
+  const el = document.getElementById(key + '_sv_' + ei + '_' + si2);
+  if (el) {
+    el.textContent = saved[si2];
+    el.className = 'set-val ' + (saved[si2] > planRepsVal ? 'over' : saved[si2] < planRepsVal ? 'under' : '');
+  }
+  // update adaptation banner
+  const adapt = getAdaptHint(key, ei, planSetsVal, planRepsVal, saved);
+  const banner = document.getElementById(key + '_ab' + ei);
+  if (banner) {
+    banner.className = 'adapt-banner ' + (adapt ? adapt.cls + ' show' : '');
+    banner.textContent = adapt ? adapt.msg : '';
+  }
+}
+
+// Compute adaptation hint based on actual vs plan
+function getAdaptHint(key, ei, planSets, planReps, savedSets) {
+  if (!savedSets || savedSets.every(v => v === planReps)) return null;
+  const total = savedSets.reduce((a,v) => a + v, 0);
+  const planTotal = planSets * planReps;
+  const ratio = total / planTotal;
+  // check prev session fail streak
+  const failStreak = getPrevFailStreak(key, ei);
+
+  if (failStreak >= 2) {
+    return { cls: 'back', msg: '⚠️ Ты 2 тренировки подряд не выполняешь план. Следующая — повторим прошлую нагрузку и добавим негативы для укрепления.' };
+  }
+  if (ratio >= 1.2) {
+    return { cls: 'harder', msg: '🔥 Отлично — ты перевыполнил план! Следующая тренировка: +1 повторение к каждому подходу.' };
+  }
+  if (ratio >= 0.9) {
+    return { cls: 'same', msg: '💪 Выполнил план. Следующая тренировка — по расписанию.' };
+  }
+  if (ratio >= 0.7) {
+    return { cls: 'easier', msg: '😤 Не дотянул до плана. Следующая — повторяем ту же нагрузку, не двигаемся вперёд.' };
+  }
+  return { cls: 'back', msg: '❌ Сложная тренировка. Следующая — снизим нагрузку: -1 повторение к каждому подходу.' };
+}
+
+function getPrevFailStreak(key, ei) {
+  // check last 2 sessions of same exercise type across weeks
+  const parts = key.match(/w(\d+)_s(\d+)/);
+  if (!parts) return 0;
+  let wi = parseInt(parts[1]), si = parseInt(parts[2]);
+  let streak = 0;
+  // look back up to 4 sessions
+  for (let i = 0; i < 4 && streak < 2; i++) {
+    si--;
+    if (si < 0) { wi--; if (wi < 0) break; si = WEEKS[wi].sessions.length - 1; }
+    if (wi < 0) break;
+    const prevKey = 'w' + wi + '_s' + si;
+    const prevSess = WEEKS[wi]?.sessions[si];
+    if (!prevSess || prevSess.rest) continue;
+    const prevEx = prevSess.exs[ei];
+    if (!prevEx) continue;
+    const prevSaved = diary[prevKey + '_sets' + ei] ? JSON.parse(diary[prevKey + '_sets' + ei]) : null;
+    if (!prevSaved) break;
+    const pr = parseReps(prevEx.scheme), ps = parseSets(prevEx.scheme);
+    const ratio = prevSaved.reduce((a,v)=>a+v,0) / (ps * pr);
+    if (ratio < 0.9) streak++; else break;
+  }
+  return streak;
+}
+
+// Apply adaptation to next session plan reps (stored as overrides)
+function applyAdaptation(key, ei) {
+  const w = WEEKS[currentWeek];
+  let session = null, si_found = -1;
+  w.sessions.forEach((s, idx) => { if ('w'+currentWeek+'_s'+idx === key) { session = s; si_found = idx; } });
+  if (!session) return;
+  const ex = session.exs[ei];
+  if (!ex || (ex.type !== 'pullup' && ex.type !== 'dip' && ex.type !== 'aux')) return;
+  const planReps = parseReps(ex.scheme);
+  const planSets = parseSets(ex.scheme);
+  const saved = diary[key + '_sets' + ei] ? JSON.parse(diary[key + '_sets' + ei]) : Array(planSets).fill(planReps);
+  const total = saved.reduce((a,v)=>a+v,0);
+  const ratio = total / (planSets * planReps);
+  const failStreak = getPrevFailStreak(key, ei);
+
+  // find next session with same ex type
+  let nextKey = null, nextEi = -1;
+  outer: for (let nw = currentWeek; nw < WEEKS.length; nw++) {
+    const startSi = nw === currentWeek ? si_found + 1 : 0;
+    for (let ns = startSi; ns < WEEKS[nw].sessions.length; ns++) {
+      const ns_sess = WEEKS[nw].sessions[ns];
+      if (ns_sess.rest) continue;
+      const matchEi = ns_sess.exs.findIndex(e => e.type === ex.type);
+      if (matchEi >= 0) { nextKey = 'w' + nw + '_s' + ns; nextEi = matchEi; break outer; }
+    }
+  }
+  if (!nextKey) return;
+
+  const nextEx = WEEKS[parseInt(nextKey.match(/w(\d+)/)[1])].sessions[parseInt(nextKey.match(/_s(\d+)/)[1])].exs[nextEi];
+  const nextPlanReps = parseReps(nextEx.scheme);
+  const nextPlanSets = parseSets(nextEx.scheme);
+
+  let override;
+  if (failStreak >= 2) {
+    override = Math.max(1, nextPlanReps - 1);
+  } else if (ratio >= 1.2) {
+    override = nextPlanReps + 1;
+  } else if (ratio >= 0.9) {
+    override = null; // no override, follow plan
+  } else if (ratio >= 0.7) {
+    override = nextPlanReps; // same as plan = repeat
+  } else {
+    override = Math.max(1, nextPlanReps - 1);
+  }
+
+  if (override !== null) {
+    diary[nextKey + '_override' + nextEi] = override;
+  } else {
+    delete diary[nextKey + '_override' + nextEi];
+  }
+  localStorage.setItem('diary2', JSON.stringify(diary));
+}
+
+function toggleSession(key) {
+  openSessions[key] = !openSessions[key];
+  renderDiary();
+}
+function saveFact(key, ei) {
+  const el = document.getElementById(key + '_f' + ei);
+  if (el) { diary[key + '_f' + ei] = el.value; localStorage.setItem('diary2', JSON.stringify(diary)); }
+}
+function setFeel(key, val) {
+  diary[key + '_feel'] = val;
+  localStorage.setItem('diary2', JSON.stringify(diary));
+  renderDiary();
+}
+function saveNote(key) {
+  const el = document.getElementById(key + '_note');
+  if (el) { diary[key + '_note'] = el.value; localStorage.setItem('diary2', JSON.stringify(diary)); }
+}
+function markDone(key) {
+  const w = WEEKS[currentWeek];
+  w.sessions.forEach((s, si) => {
+    if (!s.rest) s.exs.forEach((_, ei) => {
+      const el = document.getElementById(key + '_f' + ei);
+      if (el) diary[key + '_f' + ei] = el.value;
+    });
+    const ne = document.getElementById(key + '_note');
+    if (ne) diary[key + '_note'] = ne.value;
+  });
+  const wasDone = diary[key + '_done'];
+  diary[key + '_done'] = !wasDone;
+  // apply adaptation when marking as done
+  if (!wasDone) {
+    const sess = w.sessions.find((s, idx) => !s.rest && 'w'+currentWeek+'_s'+idx === key);
+    if (sess) sess.exs.forEach((_, ei) => applyAdaptation(key, ei));
+    openSessions[key] = false;
+    showToast('✓ Тренировка засчитана!');
+  } else {
+    showToast('↩ Отмечено как невыполненное');
+  }
+  localStorage.setItem('diary2', JSON.stringify(diary));
+  renderDiary();
+  updateHome();
+}
+function quickDone(key) {
+  const wasDone = diary[key + '_done'];
+  diary[key + '_done'] = !wasDone;
+  localStorage.setItem('diary2', JSON.stringify(diary));
+  showToast(wasDone ? '↩ Отмечено как невыполненное' : '✓ Готово!');
+  renderDiary();
+  updateHome();
+}
+
+function toggleGuide(id) {
+  const b = document.getElementById(id);
+  const a = document.getElementById('garr-' + id);
+  if (!b) return;
+  if (b.style.display === 'block') { b.style.display = 'none'; a.classList.remove('open'); }
+  else { b.style.display = 'block'; a.classList.add('open'); }
+}
+
+function renderMeals() {
+  let html = '';
+  MEALS.forEach((m, i) => {
+    html += '<div class="meal-card">'
+      + '<div class="meal-header" onclick="toggleMeal(' + i + ')">'
+      + '<div><div class="meal-name">' + m.name + '</div><div class="meal-info">' + m.kcal + ' · ' + m.protein + '</div></div>'
+      + '<div class="meal-arrow" id="ma' + i + '">▾</div></div>'
+      + '<div class="meal-body" id="mb' + i + '">'
+      + m.items.map(it => '<div class="food-item"><div class="food-n">' + it.n + '</div><div><div class="food-p">' + it.p + '</div><div class="food-k">' + it.k + '</div></div></div>').join('')
+      + '</div></div>';
+  });
+  document.getElementById('meals-container').innerHTML = html;
+}
+function toggleMeal(i) {
+  const b = document.getElementById('mb' + i), a = document.getElementById('ma' + i);
+  if (b.style.display === 'block') { b.style.display = 'none'; a.classList.remove('open'); }
+  else { b.style.display = 'block'; a.classList.add('open'); }
+}
+
+function saveTest() {
+  const p = parseInt(document.getElementById('inp-pullup').value) || 0;
+  const d = parseInt(document.getElementById('inp-dip').value) || 0;
+  if (!p && !d) { showToast('Введи хотя бы одно значение'); return; }
+  const ds = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+  if (p) maxes.pullup = p;
+  if (d) maxes.dip = d;
+  maxes.history.unshift({date: ds, pullup: p||null, dip: d||null, week: currentWeek + 1});
+  if (maxes.history.length > 12) maxes.history.pop();
+  localStorage.setItem('maxes2', JSON.stringify(maxes));
+  document.getElementById('inp-pullup').value = '';
+  document.getElementById('inp-dip').value = '';
+  showToast('🏆 Результат сохранён!');
+  updateProgress();
+  updateHome();
+}
+
+function updateProgress() {
+  document.getElementById('max-pullup-val').textContent = maxes.pullup;
+  document.getElementById('max-dip-val').textContent = maxes.dip;
+  const pd = maxes.pullup - 2, dd = maxes.dip - 2;
+  document.getElementById('max-pullup-delta').textContent = pd > 0 ? '+' + pd + ' от старта' : '';
+  document.getElementById('max-dip-delta').textContent = dd > 0 ? '+' + dd + ' от старта' : '';
+  let hHtml = '';
+  if (!maxes.history.length) {
+    hHtml = '<div class="empty-state">Запиши первый тест — он появится здесь</div>';
+  } else {
+    maxes.history.forEach(h => {
+      hHtml += '<div class="history-row"><span class="history-date">' + h.date + (h.week ? ' · Нед ' + h.week : '') + '</span>'
+        + '<div class="history-vals">'
+        + (h.pullup ? '<span><span class="history-val">' + h.pullup + '</span><span class="history-label"> подт</span></span>' : '')
+        + (h.dip ? '<span><span class="history-val">' + h.dip + '</span><span class="history-label"> брусья</span></span>' : '')
+        + '</div></div>';
+    });
+  }
+  document.getElementById('test-history').innerHTML = hHtml;
+}
+
+function updateHome() {
+  document.getElementById('home-pullup').textContent = maxes.pullup;
+  document.getElementById('home-dip').textContent = maxes.dip;
+  const totalTrains = WEEKS.reduce((a, w) => a + w.sessions.filter(s => !s.rest).length, 0);
+  const doneCount = Object.keys(diary).filter(k => k.endsWith('_done') && diary[k]).length;
+  document.getElementById('home-done').textContent = doneCount;
+  const pPct = Math.min(100, Math.round(((maxes.pullup - 2) / 10) * 100));
+  const dPct = Math.min(100, Math.round(((maxes.dip - 2) / 11) * 100));
+  const oPct = Math.round((doneCount / totalTrains) * 100);
+  document.getElementById('prog-pullup').style.width = pPct + '%';
+  document.getElementById('prog-pullup-val').textContent = pPct + '%';
+  document.getElementById('prog-dip').style.width = dPct + '%';
+  document.getElementById('prog-dip-val').textContent = dPct + '%';
+  document.getElementById('prog-overall').style.width = oPct + '%';
+  document.getElementById('prog-overall-val').textContent = oPct + '%';
+  let found = false;
+  for (let wi = 0; wi < WEEKS.length && !found; wi++) {
+    WEEKS[wi].sessions.forEach((s, si) => {
+      if (!found && !s.rest && !diary['w' + wi + '_s' + si + '_done']) {
+        document.getElementById('next-title').textContent = 'Нед ' + (wi+1) + ' · ' + s.day;
+        document.getElementById('next-desc').textContent = s.exs.map(e => e.n).join(' + ');
+        currentWeek = wi;
+        found = true;
+      }
+    });
+  }
+  if (!found) {
+    document.getElementById('next-title').textContent = '🎉 Программа выполнена!';
+    document.getElementById('next-desc').textContent = 'Все 12 недель пройдены. Отличная работа!';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+init();
+</script>
+</body>
+</html>
